@@ -1,0 +1,10 @@
+---
+- name: "Cleaning existing MQ packages for fixapply"
+  shell: 'rpm -qa | grep "\-U" | xargs rpm -ev'
+  register: uninstall_status
+  when: installType == "fixpack" and  isOldFix.rc == 0 and user_action == "Uninstall"
+
+- name: Cleaning existing MQ packages for version Upgrade
+  shell: 'rpm -qa | grep MQSeries | xargs rpm -ev'
+  register: uninstall_status
+  when: installType == "Upgrade" or user_action == "Uninstall"

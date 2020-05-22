@@ -1,0 +1,27 @@
+---
+- name: "Create backup directory if not present"
+  file:
+    path: "{{ backup_location }}"
+    state: directory
+    owner: "mqm"
+    group: "mqm"
+    mode: "u=rwx,g=rwx,o=rwx"
+  when: isBackupLocation.stat.exists == false 
+
+- name: "Taking MQ backups"
+  shell: 
+    cmd: "dmpmqcfg -m {{ item }} -a > {{ backup_location }}/{{ item }}.mqsc"
+    warn: no
+  become_user: mqm
+  with_items: 
+    - "{{ standAloneQmgrList.stdout_lines }}"
+    - "{{ multiInstanceQmgrList.stdout_lines }}"
+
+- name: "Exicuting IIB backups"
+  shell:
+    cmd: "source {{ iib_install_path }}/server/bin/mqsiprofile;mqsibackupbroker {{ item }} -d {{ backup_location }}"
+    warn: no
+  become_user: "{{ iibAdminUser.stdout }}"
+  with_items:
+    - "{{ nodeList.stdout_lines }}"
+  when: nodeList.stdout_lines | length > 0 

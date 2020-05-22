@@ -1,0 +1,38 @@
+---
+# tasks file for ansible-ibmmq-deployment
+- name: Gathering MQ facts
+  import_tasks: gather_facts.yml
+
+- pause:
+    minutes: 5
+- name: Installing MQ
+  import_tasks: install_packages.yml
+  when: user_action == "Install" and installType == "NewInstall" and isBase.stat.exists == true
+
+- block:
+  - name: Taking backups
+    import_tasks: take_backups.yml
+
+  - name: stopping services
+    import_tasks: stop_services.yml
+
+  - name: Cleaning old packages
+    import_tasks: clean_packages.yml
+
+  - name: Installing MQ
+    import_tasks: install_packages.yml
+
+  - name: Start Services
+    import_tasks: start_services.yml
+  when: user_action == 'Install' and packageCount.stdout != "0" 
+
+- block:
+  - name: Taking backups
+    import_tasks: take_backups.yml
+
+  - name: stopping services
+    import_tasks: stop_services.yml
+  
+  - name: Cleaning packages
+    import_tasks: clean_packages.yml
+  when: user_action == 'Uninstall'

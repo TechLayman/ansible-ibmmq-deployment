@@ -1,0 +1,140 @@
+---
+- name: Ensure MQ availability on target server
+  shell:
+    cmd: "rpm -qa | grep -i MQSeries | wc -l"
+    warn: no
+  register: packageCount
+  changed_when: false
+
+- set_fact:
+    installType: "NewInstall"
+  when: packageCount.stdout == "0"
+
+- block:
+  - shell: 
+      cmd: "dspmqver | grep Version | awk '{print $2}'"
+      warn: no
+    register: installedMQVersion
+    changed_when: false
+
+  - set_fact:
+      proceedActivity: "{{ mq_target_version is version(installedMQVersion.stdout, '>') }}"
+    changed_when: false
+
+  - set_fact:
+      installedMQBase: "{{ installedMQVersion.stdout.split('.')[0:2] | join('.') }}"
+
+  - set_fact:
+      targetedMQbase: "{{ mq_target_version.split('.')[0:2] | join('.') }}"
+
+  - shell: 
+      cmd: 'rpm -qa | grep MQSeries | grep "\-U"'
+      warn: no
+    register: isOldFix
+    ignore_errors: yes
+    changed_when: false
+
+  - stat:
+      path: "{{ backup_location }}"
+    register: isBackupLocation
+
+  - shell: 
+      cmd: "dspmq -o all | grep '(Running)' | grep '(Not permitted)' | awk -F'[()]' '{print $2}'"
+      warn: no
+    register: standAloneQmgrList
+    changed_when: false
+
+  - shell: 
+      cmd: "dspmq -o all | grep '(Running)' | grep '(Permitted)' | awk -F'[()]' '{print $2}'"
+      warn: no
+    register: multiInstanceQmgrList
+    changed_when: false
+
+  - shell: 
+      cmd: "rpm -qa | grep -i mq | awk -F [-] '{print $1}'"
+      warn: no
+    register: installed_rpms
+    changed_when: false
+
+  - find:
+      paths: /tmp/ibmmq/{{ mq_target_version }}
+      file_type: file
+      use_regex: yes
+      patterns: "{{ installed_rpms.stdout_lines }}"
+    register: rpm_files
+
+  - set_fact:
+      rpm_list: "{{ rpm_files.files | map(attribute='path') | list}}"
+
+  - shell: "ps -ef | grep -i bip | grep -v pts | wc -l"
+    changed_when: false
+    register: bip_count
+  
+  - shell: "cat /etc/group | grep mqbrkrs | awk -F[:] '{print $4}' | awk -F[,] '{print $1}'"
+    changed_when: false
+    register: iibAdminUser
+   
+  - shell: "source {{ iib_install_path }}/server/bin/mqsiprofile;mqsilist | grep -v BIP8071I | grep -v BIP1281I | grep -v BIP1326I | awk '{print $4}'"
+    become_user: "{{ iibAdminUser.stdout }}"
+    changed_when: false
+    register: nodeList  
+  
+  - stat:
+      path: "{{ iib_install_path }}/server/bin/mqsiprofile"
+    register: isProfileFound
+
+  - set_fact:
+      installType: "{{ 'fixpack' if targetedMQbase == installedMQBase else 'Upgrade' }}"
+  when: packageCount.stdout != "0"
+
+- stat:
+    path: "/tmp/ibmmq/{{ mq_target_version }}"
+  register: binaryLocation
+
+- block:    
+  - file:
+      path: "/tmp/ibmmq/{{ mq_target_version }}"
+      state: directory
+  - unarchive:
+      src: "{{ mq_tar_location }}"
+      dest: "/tmp/ibmmq/{{ mq_target_version }}"
+      extra_opts: [--strip-components=1]
+    when: binaryLocation.stat.exists == false and installType == "Upgrade"
+  - unarchive:
+      src: "{{ mq_tar_location }}"
+      dest: "/tmp/ibmmq/{{ mq_target_version }}"
+    when: binaryLocation.stat.exists == false and installType == "fixpack"
+
+- set_fact:
+    areBinariesAvailable: true
+
+- stat:
+    path: "/tmp/ibmmq/{{ mq_target_version }}/mqlicense.sh"
+  register: isBase
+
+- debug:
+    msg:
+    - "Installed version is : {{ installedMQVersion.stdout }}"
+    - "Installed base version is : {{ installedMQBase }}"
+    - "Targeted MQ Version is : {{ mq_target_version }}"
+    - "Targeted MQ Base Version is : {{ targetedMQbase }}"
+    - "Is the given version eligible for upgrade  : {{ proceedActivity }}"
+    - "Install Type is : {{ installType }}"
+    - "List of Running StandAlone Queue managers : {{ standAloneQmgrList.stdout_lines }}"
+    - "List of Running Multi Instance Queue Managers : {{ multiInstanceQmgrList.stdout_lines }}"
+    - "Is backup location available : {{ isBackupLocation.stat.exists }}"
+    - "installed package list : {{ installed_rpms.stdout_lines }}"
+#    - "rpm list which need to be applied : {{ rpm_list }}"
+    - "IIB running processes : {{ bip_count.stdout }}"
+    - "IIB Admin user is : {{ iibAdminUser.stdout }}"
+    - "Running integration node list is  : {{ nodeList.stdout_lines }}"
+    - "Is given iib path correct : {{ isProfileFound.stat.exists }}"
+    - "Are {{ mq_target_version }} binaries available on target machine? : {{ areBinariesAvailable }}"
+    - "is oldfix {{ isOldFix.rc }}"
+  when: user_action == "Install" and packageCount.stdout != "0"
+
+- debug:
+    msg:
+    - "Install Type is : {{ installType }}"
+    - "is given version contains base : {{ isBase.stat.exists }}"
+  when: packageCount.stdout == "0" and user_action == "Install"

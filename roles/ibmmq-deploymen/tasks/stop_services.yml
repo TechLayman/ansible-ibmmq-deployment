@@ -1,0 +1,38 @@
+---
+- name: Ending IIB process if any
+  shell:
+    cmd: "source {{ iib_install_path }}/server/bin/mqsiprofile;mqsistop {{ item }}"
+    warn: no
+  become_user: "{{ iibAdminUser.stdout }}"
+  with_items:
+    - "{{ nodeList.stdout_lines }}"
+  when: nodeList.stdout_lines | length > 0
+
+- name: Wait for IIB processes to stop if any
+  shell: "ps -ef | grep -i bip | grep -v pts | wc -l"
+  become_user: "{{ iibAdminUser.stdout }}"
+  register: iibProcCount
+  changed_when: false
+  until: iibProcCount.stdout == "0"
+  retries: 30
+  delay: 10
+
+- name: Ending MQ Queue managers if any running
+  shell:
+    cmd: "endmqm {{ item }}"
+    warn: no
+  become_user: mqm
+  with_items:
+    - "{{ standAloneQmgrList.stdout_lines }}"
+    - "{{ multiInstanceQmgrList.stdout_lines }}"
+  when: standAloneQmgrList.stdout_lines | length > 0 or multiInstanceQmgrList.stdout_lines | length > 0
+
+- name: Wait for MQ processes to stop if any
+  shell: "ps -ef | grep -v pts | grep -i mqm | wc -l"
+  become_user: mqm
+  register: mqProcCount
+  changed_when: false
+  until: mqProcCount.stdout == "0"
+  retries: 30
+  delay: 10
+

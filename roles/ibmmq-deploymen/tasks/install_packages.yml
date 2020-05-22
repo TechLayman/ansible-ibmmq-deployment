@@ -1,0 +1,27 @@
+---
+- name: Accept License
+  command: "./mqlicense.sh -accept"
+  args:
+    chdir: /tmp/ibmmq/{{ mq_target_version }}
+  register: acceptLicence
+  when: installType == "Upgrade" or installType == "NewInstall" 
+  
+- name: upgrading mq
+  yum:
+    name: "{{ rpm_list }}"
+    state: present
+  when: installType != "NewInstall" 
+
+- name: new installation of MQ
+  shell: "ls | grep MQSeries | egrep -v '(Msg|FT|AMQP|Explorer)' | xargs rpm -ivh"
+  args:
+    chdir: /tmp/ibmmq/{{ mq_target_version }}
+  when: user_action == "Install" and installType == "NewInstall" and isBase.stat.exists == true
+
+- shell: "cat /etc/opt/mqm/mqinst.ini | grep Name |uniq| awk -F[=] '{print $2}'"
+  register: installName
+
+- name: settingup the environement after upgrade
+  shell: "/opt/mqm/bin/setmqinst -i -n {{ installName.stdout }}"
+  when: installType == "Upgrade" or installType == "NewInstall"
+

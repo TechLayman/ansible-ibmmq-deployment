@@ -1,0 +1,7 @@
+---
+# defaults file for ansible-ibmmq-deployment
+mq_target_version: 8.0.0.14
+mq_tar_location: /sort/ibmmq/8.0.0.14/8.0.0-WS-MQ-LinuxX64-FP0014.tar.gz
+backup_location: /var/mqm/middlewareBackups
+iib_install_path: /opt/ibm/iib-10.0.0.19
+user_action: Install
