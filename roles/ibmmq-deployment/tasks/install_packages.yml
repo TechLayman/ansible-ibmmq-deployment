@@ -16,7 +16,7 @@
   shell: "ls | grep MQSeries | egrep -v '(Msg|FT|AMQP|Explorer)' | xargs rpm -ivh"
   args:
     chdir: /tmp/ibmmq/{{ mq_target_version }}
-  when: user_action == "Install" and installType == "NewInstall" and isBase.stat.exists == true
+  when: user_action == "Install" and installType == "NewInstall" and isBase.rc == 0
 
 - shell: "cat /etc/opt/mqm/mqinst.ini | grep Name |uniq| awk -F[=] '{print $2}'"
   register: installName

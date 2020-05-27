@@ -9,9 +9,10 @@
 #################################################################################
 
 ---
-- hosts: mqservers 
+- hosts: redhat81 
+  gather_facts: false
   user: root
   become: yes
   roles: 
-    - role: ansible-ibmmq-deployment
+    - role: ibmmq-deployment
       

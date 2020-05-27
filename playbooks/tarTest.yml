@@ -1,0 +1,16 @@
+---
+- hosts: redhat71
+  user: root
+  become: yes
+  vars:
+    tar_location:
+  tasks:
+    - name: Tar file testing
+      local_action: "shell tar -tzf /sort/ibmmq/mqadv_dev80_linux_x86-64.tar.gz | grep 'MQServer/mqlicense.sh'"
+      register: tarout
+
+    - debug:
+        msg: "{{ tarout.rc }}"
+      
+    
+

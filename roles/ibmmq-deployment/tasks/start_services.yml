@@ -1,13 +1,21 @@
 ---
-- name: starting MQ
+- name: starting StandaloneQmgrs
   shell:
     cmd: "strmqm {{ item }}"
     warn: no
   become_user: mqm
   with_items:
     - "{{ standAloneQmgrList.stdout_lines }}"
+  when: standAloneQmgrList.stdout_lines | length > 0
+
+- name: starting MultiInstanceQmgrs
+  shell:
+    cmd: "strmqm -x {{ item }}"
+    warn: no
+  become_user: mqm
+  with_items:
     - "{{ multiInstanceQmgrList.stdout_lines }}"
-  when: standAloneQmgrList.stdout_lines | length > 0 or multiInstanceQmgrList.stdout_lines | length > 0
+  when: multiInstanceQmgrList.stdout_lines | length > 0
 
 - name: starting IIB
   shell:
@@ -16,4 +24,4 @@
   become_user: "{{ iibAdminUser.stdout }}"
   with_items:
     - "{{ nodeList.stdout_lines }}"
-  when: nodeList.stdout_lines | length > 0
+  when: bipCount.stdout != "0" and isProfileFound.stat.exists == true and nodeList.stdout_lines | length > 0 

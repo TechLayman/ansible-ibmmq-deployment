@@ -10,7 +10,7 @@
 
 - name: "Taking MQ backups"
   shell: 
-    cmd: "dmpmqcfg -m {{ item }} -a > {{ backup_location }}/{{ item }}.mqsc"
+    cmd: "dmpmqcfg -m {{ item }} -a > {{ backup_location }}/{{ item }}_{{ installedMQVersion.stdout }}.mqsc"
     warn: no
   become_user: mqm
   with_items: 
@@ -24,4 +24,4 @@
   become_user: "{{ iibAdminUser.stdout }}"
   with_items:
     - "{{ nodeList.stdout_lines }}"
-  when: nodeList.stdout_lines | length > 0 
+  when: bipCount.stdout != "0" 
