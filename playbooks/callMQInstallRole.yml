@@ -9,7 +9,7 @@
 #################################################################################
 
 ---
-- hosts: redhat81 
+- hosts: mqservers 
   gather_facts: false
   user: root
   become: yes

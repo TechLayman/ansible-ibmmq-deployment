@@ -8,12 +8,13 @@
       - mq_target_version >= "7.5.0.0"
 
 - name: Verifying the given Version contains Base or fix
-  local_action: 
-    module: shell 
+  local_action:
+    module: shell
     cmd: "tar -tzf {{ mq_tar_location }} | grep 'MQServer/mqlicense.sh'"
     warn: false
   register: isBase
-  run_once: ture
+  become: false
+  ignore_errors: yes
   when: user_action != 'Uninstall'
 
 - name: Gathering MQ facts
