@@ -3,7 +3,8 @@
 mq_target_version: 8.0.0.14
 mq_tar_location: /sort/ibmmq/8.0.0-WS-MQ-LinuxX64-FP0014.tar.gz
 backup_location: /var/mqm/middlewareBackups
-iib_install_path: /opt/ibm/iib-10.0.0.19
+iib_install_path: /opt/iib/iib-10.0.0.19
+iibAdminUser: iibadmin
 user_action: Install
 min_version: 7.5.0.0
 max_version: 9.1.0.5

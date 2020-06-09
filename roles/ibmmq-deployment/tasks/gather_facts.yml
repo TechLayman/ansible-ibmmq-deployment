@@ -44,12 +44,19 @@
     register: isOldFix
     ignore_errors: yes
     changed_when: false
-    when: user_action != 'Uninstall'
+#    when: user_action != 'Uninstall'
   
   - name: Verifying Backup Location
     stat:
       path: "{{ backup_location }}"
     register: isBackupLocation
+
+  - name: Registering Running Queue Managers
+    shell:
+      cmd: "dspmq -o all | grep '(Running)' | awk -F'[()]' '{print $2}'"
+      warn: no
+    register: runningQmgrList
+    changed_when: false
 
   - name: Registering StandAlone Queue Managers
     shell:
@@ -63,6 +70,24 @@
       cmd: "dspmq -o all | grep '(Running)' | grep '(Permitted)' | awk -F'[()]' '{print $2}'"
       warn: no
     register: multiInstanceQmgrList
+    changed_when: false
+
+  - name: Finding the qmgrs data filesystems
+    shell:
+      cmd: "cat /var/mqm/mqs.ini | grep -i {{ item }} | grep DataPath | awk -F[=] 'END {if ($NR == 0) {print \"/var/mqm/qmgrs/{{ item }}\"} else {print $2}}'"
+      warn: no
+    with_flattened:
+       - "{{ runningQmgrList.stdout_lines }}"
+    register: nonDeafultDataStore
+    changed_when: false
+
+  - name: Finding the qmgr log filesystems
+    shell:
+      cmd: "cat {{ item }}/qm.ini | grep LogPath | awk -F[=] '{print $2}'"
+      warn: no
+    with_items:
+       - "{{ nonDeafultDataStore | json_query('results[*].stdout') }}"
+    register: qmgrlogfilesystems
     changed_when: false
 
   when: packageCount.stdout != "0"
@@ -185,14 +210,14 @@
       path: "{{ iib_install_path }}/server/bin/mqsiprofile"
     register: isProfileFound
  
-  - name: Finding the IIB Admin Account
-    shell: "cat /etc/group | grep mqbrkrs | awk -F[:] '{print $4}' | awk -F[,] '{print $1}'"
-    changed_when: false
-    register: iibAdminUser
+#  - name: Finding the IIB Admin Account
+#    shell: "cat /etc/group | grep mqbrkrs | awk -F[:] '{print $4}' | awk -F[,] '{print $1}'"
+#    changed_when: false
+#    register: iibAdminUser
 
   - name: Registering Running IIB Nodes if any
     shell: "source {{ iib_install_path }}/server/bin/mqsiprofile;mqsilist | grep -v BIP8071I | grep -v BIP1281I | grep -v BIP1326I | awk '{print $4}'"
-    become_user: "{{ iibAdminUser.stdout }}"
+    become_user: "{{ iibAdminUser }}"
     changed_when: false
     register: nodeList  
     when: isProfileFound.stat.exists == true 
@@ -211,6 +236,8 @@
     - "Install Type is : {{ installType }}"
     - "List of Running StandAlone Queue managers : {{ standAloneQmgrList.stdout_lines }}"
     - "List of Running Multi Instance Queue Managers : {{ multiInstanceQmgrList.stdout_lines }}"
+    - "Qmgrs Datapath : {{ nonDeafultDataStore | json_query('results[*].stdout') }}"
+    - "Qmgrs Logpath : {{ qmgrlogfilesystems | json_query('results[*].stdout') }}"
     - "Is backup location available : {{ isBackupLocation.stat.exists }}"
     - "installed package list : {{ installed_rpms.stdout_lines }}"
     - "rpm list which need to be applied : {{ rpm_list }}"
@@ -236,14 +263,17 @@
     - "installed package list : {{ installed_rpms.stdout_lines }}"
     - "List of Running StandAlone Queue managers : {{ standAloneQmgrList.stdout_lines }}"
     - "List of Running Multi Instance Queue Managers : {{ multiInstanceQmgrList.stdout_lines }}"
+    - "Qmgrs Datapath : {{ nonDeafultDataStore | json_query('results[*].stdout') }}"
+    - "Qmgrs Logpath : {{ qmgrlogfilesystems | json_query('results[*].stdout') }}"
     - "Is backup location available : {{ isBackupLocation.stat.exists }}"
+    - "status of fix installation : {{ isOldFix.rc }}"
   when: user_action == 'Uninstall' and packageCount.stdout != "0"
 
 - name: "IIB Facts : "
   debug:
     msg:
     - "IIB running processes : {{ bipCount.stdout }}"
-    - "IIB Admin user is : {{ iibAdminUser.stdout }}"
+    - "IIB Admin user is : {{ iibAdminUser }}"
     - "Running integration node list is  : {{ nodeList.stdout_lines }}"
     - "Is given iib path correct : {{ isProfileFound.stat.exists }}"
   when: packageCount.stdout != "0" and bipCount.stdout != "0"

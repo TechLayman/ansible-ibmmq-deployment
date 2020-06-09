@@ -21,7 +21,7 @@
   shell:
     cmd: "source {{ iib_install_path }}/server/bin/mqsiprofile;mqsistart {{ item }}"
     warn: no
-  become_user: "{{ iibAdminUser.stdout }}"
+  become_user: "{{ iibAdminUser }}"
   with_items:
     - "{{ nodeList.stdout_lines }}"
   when: bipCount.stdout != "0" and isProfileFound.stat.exists == true and nodeList.stdout_lines | length > 0 

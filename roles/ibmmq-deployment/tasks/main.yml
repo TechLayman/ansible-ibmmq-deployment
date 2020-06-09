@@ -40,8 +40,8 @@
   - name: Installing MQ
     import_tasks: install_packages.yml
 
-  - name: Start Services
-    import_tasks: start_services.yml
+#  - name: Start Services
+#    import_tasks: start_services.yml
   when: user_action == 'Install' and packageCount.stdout != "0"
 
 - block:

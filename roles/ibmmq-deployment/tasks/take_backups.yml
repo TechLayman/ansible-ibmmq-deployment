@@ -17,11 +17,33 @@
     - "{{ standAloneQmgrList.stdout_lines }}"
     - "{{ multiInstanceQmgrList.stdout_lines }}"
 
+- block:
+  - name: Taking backup of Qmgr data directories
+    shell:
+      cmd: "cp -Rp {{ item.0 }} {{ backup_location }}/{{ item.1 }}_data_{{ installedMQVersion.stdout }}"
+      warn: no
+    become_user: mqm
+    with_together:
+      - "{{ nonDeafultDataStore | json_query('results[*].stdout') }}"
+      - "{{ runningQmgrList.stdout_lines }}"    
+
+  - name: Taking backup of Qmgr log directories
+    shell:
+      cmd: "cp -Rp {{ item.0 }} {{ backup_location }}/{{ item.1 }}_log_{{ installedMQVersion.stdout }}"
+      warn: no
+    become_user: mqm
+    with_together:
+      - "{{  qmgrlogfilesystems | json_query('results[*].stdout') }}"
+      - "{{ runningQmgrList.stdout_lines }}"
+    
+  when: user_action == 'Install' and installType != 'Fixpack'
+
+
 - name: "Exicuting IIB backups"
   shell:
     cmd: "source {{ iib_install_path }}/server/bin/mqsiprofile;mqsibackupbroker {{ item }} -d {{ backup_location }}"
     warn: no
-  become_user: "{{ iibAdminUser.stdout }}"
+  become_user: "{{ iibAdminUser }}"
   with_items:
     - "{{ nodeList.stdout_lines }}"
   when: bipCount.stdout != "0" 

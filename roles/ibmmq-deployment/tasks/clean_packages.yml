@@ -5,7 +5,7 @@
     warn: no
   register: uninstall_status
   changed_when: false
-  when: user_action != "Uninstall" and installType == "Fixpack" and  isOldFix.rc == "0"
+  when: user_action == "Uninstall" and  isOldFix.rc == 0
 
 - name: Cleaning existing MQ packages 
   shell: 
@@ -13,4 +13,12 @@
     warn: no
   register: uninstall_status
   changed_when: false
-  when: user_action == 'Uninstall' or installType == "Upgrade"
+  when: user_action == "Uninstall" and isOldFix.rc != 0 
+
+- name: Cleaning existing MQ packages
+  shell:
+    cmd: 'rpm -qa | grep MQSeries | xargs rpm -ev'
+    warn: no
+  register: uninstall_status
+  changed_when: false
+  when: user_action == 'Install' and installType == "Upgrade"

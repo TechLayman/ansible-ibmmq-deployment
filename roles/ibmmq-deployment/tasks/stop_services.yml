@@ -4,13 +4,13 @@
     shell:
       cmd: "source {{ iib_install_path }}/server/bin/mqsiprofile;mqsistop {{ item }}"
       warn: no
-    become_user: "{{ iibAdminUser.stdout }}"
+    become_user: "{{ iibAdminUser }}"
     with_items:
       - "{{ nodeList.stdout_lines }}"
 
   - name: Wait for IIB processes to stop if any
     shell: "ps -ef | grep -i bip | grep -v pts | wc -l"
-    become_user: "{{ iibAdminUser.stdout }}"
+    become_user: "{{ iibAdminUser }}"
     register: iibProcCount
     changed_when: false
     until: iibProcCount.stdout == "0"
