@@ -2,7 +2,7 @@
 - block:
   - name: Ending IIB process if any
     shell:
-      cmd: "source {{ iib_install_path }}/server/bin/mqsiprofile;mqsistop {{ item }}"
+      cmd: "source {{ iib_install_path }}/server/bin/mqsiprofile;{{ iib_install_path }}/server/bin/mqsistop {{ item }}"
       warn: no
     become_user: "{{ iibAdminUser }}"
     with_items:
