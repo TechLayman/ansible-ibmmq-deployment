@@ -20,7 +20,7 @@
 
 - name: Ending MQ Queue managers if any running
   shell:
-    cmd: "endmqm {{ item }}"
+    cmd: "{{ mq_binary_path }}/endmqm {{ item }}"
     warn: no
   become_user: mqm
   with_items:

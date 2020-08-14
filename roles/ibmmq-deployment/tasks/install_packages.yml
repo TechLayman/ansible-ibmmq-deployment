@@ -22,6 +22,6 @@
   register: installName
 
 - name: settingup the environement after upgrade
-  shell: "/opt/mqm/bin/setmqinst -i -n {{ installName.stdout }}"
+  shell: "{{ mq_binary_path }}/setmqinst -i -n {{ installName.stdout }}"
   when: installType == "Upgrade" or installType == "NewInstall"
 

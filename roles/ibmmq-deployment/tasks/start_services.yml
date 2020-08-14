@@ -1,7 +1,7 @@
 ---
 - name: starting StandaloneQmgrs
   shell:
-    cmd: "strmqm {{ item }}"
+    cmd: "{{ mq_binary_path }}/strmqm {{ item }}"
     warn: no
   become_user: mqm
   with_items:
@@ -10,7 +10,7 @@
 
 - name: starting MultiInstanceQmgrs
   shell:
-    cmd: "strmqm -x {{ item }}"
+    cmd: "{{ mq_binary_path }}/strmqm -x {{ item }}"
     warn: no
   become_user: mqm
   with_items:

@@ -10,7 +10,7 @@
 
 - name: "Taking MQ backups"
   shell: 
-    cmd: "dmpmqcfg -m {{ item }} -a > {{ backup_location }}/{{ item }}_{{ installedMQVersion.stdout }}.mqsc"
+    cmd: "{{ mq_binary_path }}/dmpmqcfg -m {{ item }} -a > {{ backup_location }}/{{ item }}_{{ installedMQVersion.stdout }}.mqsc"
     warn: no
   become_user: mqm
   with_items: 

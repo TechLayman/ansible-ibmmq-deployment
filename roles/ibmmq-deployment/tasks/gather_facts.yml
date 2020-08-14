@@ -15,7 +15,7 @@
 - block:
   - name: Gathering Installed MQ Version
     shell:
-      cmd: "dspmqver | grep Version | awk '{print $2}'"
+      cmd: "{{ mq_binary_path }}/dspmqver | grep Version | awk '{print $2}'"
       warn: no
     register: installedMQVersion
     changed_when: false
@@ -53,21 +53,21 @@
 
   - name: Registering Running Queue Managers
     shell:
-      cmd: "dspmq -o all | grep '(Running)' | awk -F'[()]' '{print $2}'"
+      cmd: "{{ mq_binary_path }}/dspmq -o all | grep '(Running)' | awk -F'[()]' '{print $2}'"
       warn: no
     register: runningQmgrList
     changed_when: false
 
   - name: Registering StandAlone Queue Managers
     shell:
-      cmd: "dspmq -o all | grep '(Running)' | grep '(Not permitted)' | awk -F'[()]' '{print $2}'"
+      cmd: "{{ mq_binary_path }}/dspmq -o all | grep '(Running)' | grep '(Not permitted)' | awk -F'[()]' '{print $2}'"
       warn: no
     register: standAloneQmgrList
     changed_when: false
 
   - name: Registering MultiInstance Queue Managers
     shell:
-      cmd: "dspmq -o all | grep '(Running)' | grep '(Permitted)' | awk -F'[()]' '{print $2}'"
+      cmd: "{{ mq_binary_path }}/dspmq -o all | grep '(Running)' | grep '(Permitted)' | awk -F'[()]' '{print $2}'"
       warn: no
     register: multiInstanceQmgrList
     changed_when: false
@@ -100,7 +100,8 @@
 - block:
   - name: Checking the possibility of action
     set_fact:
-      noAction: "{{ 'true' if  mq_target_version is version(installedMQVersion.stdout, '==') else 'false' }}"
+      noAction: "{% if mq_target_version == installedMQVersion.stdout %}{{ true }}{% else %}{{ false }}{% endif %}"
+#      noAction: "{{ 'true' if  mq_target_version is version(installedMQVersion.stdout, '==') else 'false' }}"
 
   - name: Validating Install Type
     set_fact:
@@ -216,7 +217,7 @@
 #    register: iibAdminUser
 
   - name: Registering Running IIB Nodes if any
-    shell: "source {{ iib_install_path }}/server/bin/mqsiprofile;mqsilist | grep -v BIP8071I | grep -v BIP1281I | grep -v BIP1326I | awk '{print $4}'"
+    shell: "source {{ iib_install_path }}/server/bin/mqsiprofile > /dev/null;{{ iib_install_path }}/server/bin/mqsilist | grep -Ev 'BIP8071I|BIP1281I|BIP1326I|repetation|completion|=' | awk '{print $4}'"
     become_user: "{{ iibAdminUser }}"
     changed_when: false
     register: nodeList  
