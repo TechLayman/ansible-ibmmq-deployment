@@ -1,7 +1,7 @@
 ---
 - name: "Cleaning existing MQ packages"
   shell: 
-    cmd: 'rpm -qa | grep "\-U" | xargs rpm -ev'
+    cmd: 'rpm -qa | grep MQSeries | grep "\-U" | xargs rpm -ev'
     warn: no
   register: uninstall_status
   changed_when: false
