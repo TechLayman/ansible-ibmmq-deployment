@@ -5,8 +5,10 @@
   user: root
   become: yes
   vars:
-    mq_target_version: 9.1.4.0
-    mq_tar_location: /home/adminsan/soft/ibmmq/mqadv_dev914_linux_x86-64.tar.gz
+    mq_target_version: 9.1.0.0
+    mq_tar_location: /home/adminsan/soft/ibmmq/mqadv_dev910_linux_x86-64.tar.gz
+#    mq_tar_location: /home/adminsan/soft/ibmmq/9.1.0-IBM-MQ-LinuxX64-FP0006.tar.gz
+#    mq_tar_location: /home/adminsan/soft/ibmmq/mqadv_dev920_linux_x86-64.tar.gz
     backup_location: /var/mqm/middlewareBackups
     mq_binary_path: /opt/mqm/bin
     iib_install_path: /opt/iib/iib-10.0.0.19

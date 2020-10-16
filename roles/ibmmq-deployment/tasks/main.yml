@@ -4,7 +4,7 @@
 - name: check if version is within acceptable range
   assert:
     that:
-      - mq_target_version <= "9.1.5.0" 
+      - mq_target_version <= "9.2.5.0" 
       - mq_target_version >= "7.5.0.0"
 
 - name: Verifying the given Version contains Base or fix
